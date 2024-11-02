@@ -1,5 +1,6 @@
 const express = require("express");
 const axios = require("axios");
+const cors = require("cors");
 const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 
@@ -23,24 +24,21 @@ const customLimiter = rateLimit({
 // Anwenden des Limiters auf alle Routen
 app.use(customLimiter);
 
-// Middleware für CORS
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*"); // Erlaubt alle Ursprünge
-  res.header("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-  
-  // Wenn die Anfrage eine OPTIONS-Anfrage ist, antworte sofort
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  
-  next(); // Gehe zur nächsten Middleware
-});
+// CORS-Konfiguration
+const corsOptions = {
+  origin: ["https://www.google.com", "https://www.google.de"], // Erlaubte Ursprünge
+  methods: ["GET", "POST", "OPTIONS"], // Erlaubte Methoden
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"], // Erlaubte Header
+  credentials: true,
+  maxAge: 600,
+};
 
+app.use(cors(corsOptions));
 app.use(express.json());
 
 const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
 
+// Definiere den Endpunkt /api/perplexity
 app.post("/api/perplexity", async (req, res) => {
   try {
     const response = await axios.post(
@@ -70,6 +68,7 @@ app.get("/ping", (req, res) => {
   res.send("Pong!");
 });
 
+// Starte den Server
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log("Your app is listening on port " + listener.address().port);
 });
